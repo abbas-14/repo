@@ -28,7 +28,7 @@ exit_if_not_all_changes_added() {
 
 is_commit_message_ok() {
     local COMMIT_MSG_PATTERN
-    COMMIT_MSG_PATTERN="^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-zA-Z0-9-_]+\))?: .+"
+    COMMIT_MSG_PATTERN="^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test|merge)(\([a-zA-Z0-9-_]+\))?: .+"
     if echo "$1" | grep -qP "$COMMIT_MSG_PATTERN"; then
         return 0
     else

@@ -19,7 +19,7 @@ any_sensitive_files() {
 cmd_default(){
     STAT="$("$GIT_EXEC" status --porcelain)"
     nochanges=$(echo "$STAT" | grep -cE "^ M")
-    no_untracked_or_modified=$(echo "$STAT" | grep -cE "^(AD|AM|\?\?)")
+    no_untracked_or_modified=$(echo "$STAT" | grep -cE "^(UU|AD|AM|\?\?)")
 
     if [ "$no_untracked_or_modified" -eq 0 ] && [ "$nochanges" -eq 0 ]; then
         echo "Error: Nothing to be staged!!"
