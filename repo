@@ -49,10 +49,12 @@ usage() {
 }
 
 download_updates() {
+	# if we need incase of checking it out again at the end
+	local OLD_BR="$($GIT_EXEC branch --no-color | sed 's/^[* ] //';)"
 	pushd .
 	cd $GITFLOW_DIR
-	$GIT_EXEC checkout master
-	$GIT_EXEC pull origin master
+	$GIT_EXEC checkout "$DEF_MASTER"
+	$GIT_EXEC pull origin "$DEF_MASTER"
 	popd
 }
 
