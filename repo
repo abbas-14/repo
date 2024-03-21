@@ -65,8 +65,8 @@ wrap_up_things() {
 	local OFFLINE_VER="$(awk -F '=' '/GITFLOW_VERSION=/{print $2}' "$GITFLOW_DIR/repo-version" | awk '{$1=$1};1')"
 
 	if [ "$ONLINE_VER" != "$OFFLINE_VER" ]; then
-		echo "Updates are available for repo."
-		echo "Downloading updates.."
+		# echo "Updates are available for repo."
+		# echo "Downloading updates.."
 		download_updates >/dev/null 2>&1
 	fi
 
