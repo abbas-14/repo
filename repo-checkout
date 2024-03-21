@@ -1,0 +1,36 @@
+init() {
+  require_git_repo
+  require_gitflow_initialized
+  gitflow_load_settings
+  VERSION_PREFIX=$(eval "echo `$GIT_EXEC config --get gitflow.prefix.versiontag`")
+  PREFIX=$($GIT_EXEC config --get gitflow.prefix.release)
+}
+
+is_branch_name_ok() {
+    BRANCH_NAME_PATTERN="^(feature|release|hotfix|support)\/[a-zA-Z0-9_-]+$"
+    # local lbranch="$(git_current_branch)" 
+    if ! [[ "$1" =~ $BRANCH_NAME_PATTERN ]]; then
+        echo "Error: Branch name does not adhere with Branch name conventions."
+        return 1
+    fi
+    return 0
+}
+
+cmd_default() {
+    DEFINE_boolean 'branch' false 'creates a new branch based on current branch.' 'b'
+    FLAGS_HELP="USAGE: repo checkout <branch or commit>"
+    
+    FLAGS "$@" || exit $?
+    eval set -- "${FLAGS_ARGV}"
+
+    local params_num=$#
+
+    if [ $params_num -eq 0 ] ; then
+        echo "Error: no branch or commit hash provided!"
+        flags_help
+        exit 1
+    fi
+    
+    BR="$1"
+    $GIT_EXEC checkout "$BR"
+}

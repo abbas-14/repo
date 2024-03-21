@@ -1,0 +1,146 @@
+#!/bin/bash
+
+# set this to workaround expr problems in shFlags on freebsd
+if uname -s | egrep -iq 'bsd'; then export EXPR_COMPAT=1; fi
+
+# enable debug mode
+if [ "$DEBUG" = "yes" ]; then
+	set -x
+fi
+
+# change in future to your liking!!
+export GIT_EXEC="git"
+
+# The sed expression here replaces all backslashes by forward slashes.
+# This helps our Windows users, while not bothering our Unix users.
+export GITFLOW_DIR=$(dirname "$(echo "$0" | sed -e 's,\\,/,g')")
+
+
+export DEF_MASTER="main"
+export DEF_DEVELOP="develop"
+export DEF_FEAT_PREFIX="feature/"
+export DEF_VERSION_TAG_PREFIX="v"
+export DEF_HOTFIX_PREFIX="hotfix/"
+export DEF_RELEASE_PREFIX="release/"
+
+
+usage() {
+	echo "usage: repo <subcommand>"
+	echo
+	echo "Available subcommands are:"
+	echo "   init      Initialize a new git repo with support for the branching model."
+	echo "   push      publish local commits to remote."
+	echo "   branch    list branches."
+	echo "   checkout  checkout a branch."
+	echo "   reflog    check what has happened so far to the repository."
+	echo "   rebase    re-base current branch up and down."
+	echo "   clone     clone a repository."
+	echo "   add       Add changes to stage area."
+	echo "   commit    Commit the staged changes."
+	echo "   push      Publish changes to remote origin."
+	echo "   log       Print log of commits."
+	echo "   feature   Manage your feature branches."
+	echo "   release   Manage your release branches."
+	echo "   hotfix    Manage your hotfix branches."
+	echo "   support   Manage your support branches."
+	echo "   version   Shows version information."
+	echo
+	echo "Try 'repo <subcommand> help' for details."
+}
+
+download_updates() {
+	pushd .
+	cd $GITFLOW_DIR
+	$GIT_EXEC checkout master
+	$GIT_EXEC pull origin master
+	popd
+}
+
+wrap_up_things() {
+	local URL=""
+	# local ONLINE_VER=$(curl "$URL" | grep)
+	download_updates 2>/dev/null 1>&2
+	exit 0
+}
+
+main() {
+	if [ $# -lt 1 ]; then
+		usage
+		exit 1
+	fi
+
+	# load common functionality
+	. "$GITFLOW_DIR/repo-common"
+
+	# This environmental variable fixes non-POSIX getopt style argument
+	# parsing, effectively breaking repo subcommand parsing on several
+	# Linux platforms.
+	export POSIXLY_CORRECT=1
+
+	# use the shFlags project to parse the command line arguments
+	. "$GITFLOW_DIR/repo-shFlags"
+	FLAGS_PARENT="repo"
+
+	# allow user to request git action logging
+	DEFINE_boolean show_commands false 'show actions taken (git commands)' g
+
+	# do actual parsing
+	FLAGS "$@" || exit $?
+	eval set -- "${FLAGS_ARGV}"
+
+	# sanity checks
+	SUBCOMMAND="$1"; shift
+	# echo "## $(file $GITFLOW_DIR/repo-$SUBCOMMAND)"
+
+	local OTHER_CMD_PTRN="^(clone|push|branch|pull|reflog|rebase)$"
+
+	if [[ "$SUBCOMMAND" =~ $OTHER_CMD_PTRN ]]; then
+		$GIT_EXEC "$SUBCOMMAND" "$@"
+		wrap_up_things
+	fi
+
+	if [ ! -e "$GITFLOW_DIR/repo-$SUBCOMMAND" ]; then
+		usage
+		exit 1
+	fi
+
+	# run command
+	. "$GITFLOW_DIR/repo-$SUBCOMMAND"
+	FLAGS_PARENT="repo $SUBCOMMAND"
+
+	# CUSTOM_SUB_CMD="$SUBCOMMAND"
+	CUSTOM_SUB_CMD_PATTERN="^(add|checkout|commit|log|push|status)$"
+
+	# if [[ "$CUSTOM_SUB_CMD" =~ $CUSTOM_SUB_CMD_PATTERN ]]; then
+	# 	cmd_$CUSTOM_SUB_CMD "$@"
+	# 	wrap_up_things
+	# fi
+
+	# test if the first argument is a flag (i.e. starts with '-')
+	# in that case, we interpret this arg as a flag for the default
+	# command
+	SUBACTION="default"
+	if ! [[ "$SUBCOMMAND" =~ $CUSTOM_SUB_CMD_PATTERN ]] && [ "$1" != "" ] && { ! echo "$1" | grep -q "^-"; } then
+		SUBACTION="$1"; shift
+	fi
+	if ! type "cmd_$SUBACTION" >/dev/null 2>&1 && ! [[ "$SUBCOMMAND" =~ $CUSTOM_SUB_CMD_PATTERN ]]; then
+		warn "Unknown subcommand: '$SUBACTION'"
+		usage
+		exit 1
+	fi
+
+	# echo "subact: $SUBACTION"
+
+	# # run the specified action
+	if [ $SUBACTION != "help" ] && [ $SUBCOMMAND != "init" ] ; then
+		init
+	fi
+	# echo "subact: $SUBACTION"
+	# if cmd is:
+	#        repo subcmd -> subaction=default
+	# 		 repo subcmd subact -> subaction=subact
+	cmd_$SUBACTION "$@"
+	wrap_up_things
+}
+
+main "$@"

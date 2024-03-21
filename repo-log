@@ -1,0 +1,18 @@
+init() {
+  require_git_repo
+  require_gitflow_initialized
+  gitflow_load_settings
+  VERSION_PREFIX=$(eval "echo `$GIT_EXEC config --get gitflow.prefix.versiontag`")
+  PREFIX=$($GIT_EXEC config --get gitflow.prefix.release)
+}
+
+cmd_default() {
+    # DEFINE_string 'msg' '' 'Use the given message as the commit message.' 'm'
+
+    # FLAGS "$@" || exit $?
+    # eval set -- "${FLAGS_ARGV}"
+    
+    # if is_commit_message_ok "${FLAGS_msg}"; then
+    "$GIT_EXEC" log --pretty --graph --oneline
+    # fi
+}

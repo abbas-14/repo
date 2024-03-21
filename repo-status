@@ -1,0 +1,11 @@
+init() {
+  require_git_repo
+  require_gitflow_initialized
+  gitflow_load_settings
+  VERSION_PREFIX=$(eval "echo `$GIT_EXEC config --get gitflow.prefix.versiontag`")
+  PREFIX=$($GIT_EXEC config --get gitflow.prefix.release)
+}
+
+cmd_default() {
+    $GIT_EXEC status
+}
