@@ -1,0 +1,35 @@
+init() {
+  require_git_repo
+  require_gitflow_initialized
+  gitflow_load_settings
+  VERSION_PREFIX=$(eval "echo `$GIT_EXEC config --get gitflow.prefix.versiontag`")
+  PREFIX=$($GIT_EXEC config --get gitflow.prefix.release)
+}
+
+any_sensitive_files() {
+    SENSITIVE_FILE_PATTERN="^.*(\.env|\.config).*$"
+    FILES=$("$GIT_EXEC" status --porcelain)
+    if [[ "$FILES" =~ $SENSITIVE_FILE_PATTERN ]]; then
+        echo "Error: Add file(s) with sensitive information, to the .gitignore"
+        return 0
+    fi
+    return 1
+}
+
+cmd_default(){
+    STAT="$("$GIT_EXEC" status --porcelain)"
+    nochanges=$(echo "$STAT" | grep -cE "^ M")
+    no_untracked_or_modified=$(echo "$STAT" | grep -cE "^(AD|AM|\?\?)")
+
+    if [ "$no_untracked_or_modified" -eq 0 ] && [ "$nochanges" -eq 0 ]; then
+        echo "Error: Nothing to be staged!!"
+        exit 1
+    fi
+    if [ $# -eq 0 ]; then
+        echo "Error: Any path to be added, not provided!"
+        exit 1
+    elif any_sensitive_files "$1"; then
+        exit 1
+    fi
+    "$GIT_EXEC" add $1
+}

@@ -1,0 +1,15 @@
+
+GITFLOW_VERSION=0.1.0
+
+usage() {
+	echo "usage: repo version"
+}
+
+cmd_default() {
+	echo "$GITFLOW_VERSION"
+}
+
+cmd_help() {
+	usage
+	exit 0
+}

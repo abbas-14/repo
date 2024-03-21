@@ -1,0 +1,61 @@
+init() {
+  require_git_repo
+  require_gitflow_initialized
+  gitflow_load_settings
+  VERSION_PREFIX=$(eval "echo `$GIT_EXEC config --get gitflow.prefix.versiontag`")
+  PREFIX=$($GIT_EXEC config --get gitflow.prefix.release)
+}
+
+exit_if_no_changes() {
+    local NUM_OF_CH
+    NUM_OF_CH=$($GIT_EXEC status --porcelain | grep -cE "^(A|AD|AM|M|\?\?)")
+    if [ "$NUM_OF_CH" -eq 0 ]; then
+        echo "Error: No changes to be committed."
+        return 1
+    fi
+}
+
+exit_if_not_all_changes_added() {
+    if "$GIT_EXEC" status --porcelain | grep -q "^??"; then
+        echo "Error: There are untracked files. Please add all files before committing."
+        return 1
+    fi
+    if "$GIT_EXEC" status --porcelain | grep -q "^ M"; then
+        echo "Error: There are unstaged changes. Please stage all changes before committing."
+        return 1
+    fi
+}
+
+is_commit_message_ok() {
+    local COMMIT_MSG_PATTERN
+    COMMIT_MSG_PATTERN="^(build|chore|ci|docs|feat|fix|perf|refactor|revert|style|test)(\([a-zA-Z0-9-_]+\))?: .+"
+    if echo "$1" | grep -qP "$COMMIT_MSG_PATTERN"; then
+        return 0
+    else
+        echo "Error: Commit message does not follow conventional commit syntax."
+        echo "Please use the format: <type>[optional scope]: <description>"
+        echo
+        echo "Examples:"
+        echo "feat: add login functionality"
+        echo "feat(api)!: send an email to the customer when a product is shipped"
+        echo "Ref: <https://www.conventionalcommits.org>"
+        echo
+        return 1
+    fi
+}
+
+cmd_default() {
+    local FLAGS_msg
+    DEFINE_string 'msg' '' 'Use the given message as the commit message.' 'm'
+    FLAGS "$@" || exit $?
+    eval set -- "${FLAGS_ARGV}"
+    exit_if_not_all_changes_added || return $?
+    exit_if_no_changes || return $?
+    FLAGS_msg="$(trim_it "$FLAGS_msg")"
+    is_commit_message_ok "$FLAGS_msg" || return $?
+    echo "#now committing.."
+    $GIT_EXEC commit -S -s -m "$FLAGS_msg" 2>/dev/null
+    if [ $? -eq 1 ]; then
+        echo "Error: The commit failed. Please ensure all changes are staged and the commit command is correct."
+    fi
+}
