@@ -59,7 +59,7 @@ download_updates() {
 
 
 wrap_up_things() {
-	local URL="https://raw.githubusercontent.com/abbas-14/repo/develop/repo-version"
+	local URL="https://raw.githubusercontent.com/abbas-14/repo/main/repo-version"
 	local ONLINE_VER="$(curl -sSL "$URL" | awk -F '=' '/GITFLOW_VERSION=/{print $2}' | awk '{$1=$1};1')"
 	local OFFLINE_VER="$(awk -F '=' '/GITFLOW_VERSION=/{print $2}' "$GITFLOW_DIR/repo-version" | awk '{$1=$1};1')"
 
