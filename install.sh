@@ -10,6 +10,29 @@ get_rc_path() {
     fi
 }
 
+make_install() {
+  local files=(repo*)
+  if ! [ ${#files[@]} -eq 0 ]; then
+    echo "Installing all repo* files into /usr/bin .."
+    if ls /usr/bin/repo* 2>/dev/null 1>&2; then
+      echo
+      echo "Found previous installation."
+      echo "Removing previous installed files first.."
+      sudo rm /usr/bin/repo*
+    fi
+    echo
+    echo "Total files to be installed: ${#files[@]}"
+    for f in "${files[@]}"; do 
+      chmod +x "$f"
+      echo "copying: $f"
+      sudo ln -sf "$(pwd)"/$f /usr/bin/$f 
+    done
+  else
+    echo "Installation failed!"
+    echo "reason: current directory does not contain the repo-* files."
+  fi
+}
+
 install_repo() {
     # install the repo binary
     local REPO_PATH="$2"
@@ -20,32 +43,13 @@ install_repo() {
 
     cd "$REPO_PATH"
 
-    gitty clone https://github.com/abbas-14/repo.git
+    git clone https://github.com/abbas-14/repo.git
     cd repo
-    sudo make install
-}
-
-relocate_git() {
-    type git 1>/dev/null 2>&1
-
-    if [ $? -eq 0 ]; then
-        local GIT_PATH_CURR=$(which git | sed 's/git//')
-        sudo mv "$GIT_PATH_CURR/git" "$GIT_PATH_CURR/gitty"
-    else
-        echo "error: no git installation found."
-        echo
-        echo "Please install git first and run this script again!"
-    fi
+    make_install
 }
 
 main() {
     local REPO_PATH="$HOME/.local/lib"
-
-    if ! type gitty 1>/dev/null 2>&1; then
-        relocate_git
-    else
-        echo "[d] git already relocated."
-    fi
     
     if ! [ -d "$REPO_PATH/repo" ]; then
         install_repo "$REPO_PATH"
