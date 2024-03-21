@@ -44,11 +44,11 @@ install_repo() {
     cd "$REPO_PATH"
 
     git clone https://github.com/abbas-14/repo.git
-    cd repo
-    if [ $? -eq 1 ]; then
-        echo "cannot clone a git repository."
+    if ! [ $? -eq 0 ]; then
+        echo "cannot clone a git repository: abbas-14/repo"
         exit 1
     fi
+    cd repo
     make_install
 }
 
