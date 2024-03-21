@@ -13,8 +13,7 @@ export GIT_EXEC="git"
 
 # The sed expression here replaces all backslashes by forward slashes.
 # This helps our Windows users, while not bothering our Unix users.
-export GITFLOW_DIR=$(dirname "$(echo "$0" | sed -e 's,\\,/,g')")
-
+export GITFLOW_DIR="$(dirname "$(readlink $(which repo))")"
 
 export DEF_MASTER="main"
 export DEF_DEVELOP="develop"
@@ -51,8 +50,8 @@ usage() {
 download_updates() {
 	pushd .
 	cd $GITFLOW_DIR
-	$GIT_EXEC checkout master
-	$GIT_EXEC pull origin master
+	$GIT_EXEC checkout main
+	$GIT_EXEC pull origin main
 	popd
 }
 
@@ -63,6 +62,7 @@ wrap_up_things() {
 	local OFFLINE_VER="$(awk -F '=' '/GITFLOW_VERSION=/{print $2}' "$GITFLOW_DIR/repo-version" | awk '{$1=$1};1')"
 
 	if [ "$ONLINE_VER" != "$OFFLINE_VER" ]; then
+	echo "$GITFLOW_DIR"
 		echo "Updates are available for repo."
 		echo "Downloading updates.."
 		download_updates >/dev/null 2>&1
