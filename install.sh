@@ -5,7 +5,7 @@ get_rc_path() {
         # it means current shell is zsh
         echo "$HOME/.zshrc"
     elif echo "$SHELL" | grep -qP ".*bash"; then
-        # it means current shell is zsh
+        # it means current shell is bash
         echo "$HOME/.bashrc"
     fi
 }
@@ -35,7 +35,7 @@ make_install() {
 
 install_repo() {
     # install the repo binary
-    local REPO_PATH="$2"
+    local REPO_PATH="$1"
     
     if ! [ -d "$REPO_PATH" ]; then
         mkdir -p "$REPO_PATH"
